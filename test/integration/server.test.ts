@@ -11,11 +11,14 @@ const blogHtml = await Bun.file(
 const emptyTitlesHtml = await Bun.file(
   "test/fixtures/html/empty-titles.html",
 ).text();
+const cardAsLinkHtml = await Bun.file(
+  "test/fixtures/html/card-as-link.html",
+).text();
 
 describe("server", () => {
   it("serves the health endpoint", async () => {
     const app = createApp();
-    const response = await app.request("http://127.0.0.1:3000/");
+    const response = await app.request("http://127.0.0.1:8677/");
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -28,14 +31,14 @@ describe("server", () => {
   it("returns JSON 404 and 405 responses", async () => {
     const app = createApp();
 
-    const notFound = await app.request("http://127.0.0.1:3000/nope");
+    const notFound = await app.request("http://127.0.0.1:8677/nope");
     expect(notFound.status).toBe(404);
     expect(await notFound.json()).toEqual({
       error: "Not found",
       routes: ["/", "/rss", "/atom"],
     });
 
-    const notAllowed = await app.request("http://127.0.0.1:3000/rss", {
+    const notAllowed = await app.request("http://127.0.0.1:8677/rss", {
       method: "POST",
     });
     expect(notAllowed.status).toBe(405);
@@ -53,8 +56,8 @@ describe("server", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a&desc=p",
-      { headers: { host: "127.0.0.1:3000" } },
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a&desc=p",
+      { headers: { host: "127.0.0.1:8677" } },
     );
     const xml = await response.text();
 
@@ -70,7 +73,7 @@ describe("server", () => {
     expect(xml).not.toContain("mailto:hello@example.com");
     expect(xml).not.toContain("Duplicate article");
     expect(xml).toContain(
-      '<atom:link href="http://127.0.0.1:3000/rss?url=example.com/blog&amp;item=.post&amp;link=a&amp;desc=p" rel="self" type="application/rss+xml"/>',
+      '<atom:link href="http://127.0.0.1:8677/rss?url=example.com/blog&amp;item=.post&amp;link=a&amp;desc=p" rel="self" type="application/rss+xml"/>',
     );
     expect(calls).toHaveLength(1);
     expect(calls[0]?.headers.get("user-agent")).toBe(CHROME_136_UA);
@@ -95,7 +98,7 @@ describe("server", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=https://example.com/list&item=.entry&link=a&limit=0",
+      "http://127.0.0.1:8677/rss?url=https://example.com/list&item=.entry&link=a&limit=0",
     );
     const xml = await response.text();
 
@@ -116,10 +119,10 @@ describe("server", () => {
     const app = createApp({ cache, fetchImpl, now: () => 1_000 });
 
     const first = await app.request(
-      "http://127.0.0.1:3000/atom?url=example.com/blog&item=.post&link=a&debug=1",
+      "http://127.0.0.1:8677/atom?url=example.com/blog&item=.post&link=a&debug=1",
     );
     const second = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a&debug=1",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a&debug=1",
     );
 
     expect(first.headers.get("content-type")).toBe(
@@ -151,18 +154,45 @@ describe("server", () => {
 
     const app = createApp({ fetchImpl, now: () => nowMs });
     const first = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a",
     );
     const etag = first.headers.get("etag");
 
     nowMs = 2_000;
     const second = await app.request(
-      "http://127.0.0.1:3000/rss?link=a&item=.post&url=example.com/blog",
+      "http://127.0.0.1:8677/rss?link=a&item=.post&url=example.com/blog",
       { headers: { "if-none-match": etag ?? "" } },
     );
 
     expect(calls).toHaveLength(1);
     expect(second.status).toBe(304);
+  });
+
+  it("treats the item itself as the link when it matches the link selector", async () => {
+    const { calls, fetchImpl } = createMockFetch({
+      "https://example.com/cards": {
+        body: cardAsLinkHtml,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      },
+    });
+
+    const app = createApp({ fetchImpl });
+    const response = await app.request(
+      "http://127.0.0.1:8677/rss?url=example.com/cards&item=a.note&link=a.note&title=h3&desc=.description",
+    );
+    const xml = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(xml).toContain("<title>Alpha Title</title>");
+    expect(xml).toContain("<title>Beta Title</title>");
+    expect(xml).toContain("<title>Gamma Title</title>");
+    expect(xml).toContain("<link>https://example.com/articles/alpha</link>");
+    expect(xml).toContain("<link>https://example.com/articles/beta</link>");
+    expect(xml).toContain("<link>https://example.com/articles/gamma</link>");
+    expect(xml).toContain("<description>Alpha summary text.</description>");
+    expect(xml).toContain("<description>Beta summary text.</description>");
+    expect(xml).toContain("<description>Gamma summary text.</description>");
+    expect(calls).toHaveLength(1);
   });
 
   it("bypasses cache when ttl=0", async () => {
@@ -176,10 +206,10 @@ describe("server", () => {
     const app = createApp({ fetchImpl });
 
     await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a&ttl=0",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a&ttl=0",
     );
     await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a&ttl=0",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a&ttl=0",
     );
 
     expect(calls).toHaveLength(2);

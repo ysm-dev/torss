@@ -58,9 +58,14 @@ export async function scrapeFeed(
 
   for (const node of matchedItems) {
     const item = $(node);
-    const linkElement = item.find(request.link).first();
-    const tagName = linkElement.get(0)?.tagName.toLowerCase();
-    if (tagName !== "a") {
+    const linkElement = item.is(request.link)
+      ? item
+      : item.find(request.link).first();
+    const linkNode = linkElement.get(0);
+    if (!linkNode || !("tagName" in linkNode)) {
+      continue;
+    }
+    if (linkNode.tagName.toLowerCase() !== "a") {
       continue;
     }
 

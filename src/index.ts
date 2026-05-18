@@ -232,7 +232,7 @@ export function createApp(options: AppOptions = {}) {
 
 export function startServer() {
   const host = Bun.env.HOST || "127.0.0.1";
-  const port = getNumberEnv("PORT", 3000);
+  const port = getNumberEnv("PORT", 8677);
   const app = createApp({ verbose: Bun.env.TORSS_VERBOSE === "1" });
 
   try {

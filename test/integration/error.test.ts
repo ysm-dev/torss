@@ -11,7 +11,7 @@ describe("error responses", () => {
   it("returns 400 for missing required parameters", async () => {
     const app = createApp();
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?item=.post&link=a",
+      "http://127.0.0.1:8677/rss?item=.post&link=a",
     );
 
     expect(response.status).toBe(400);
@@ -24,7 +24,7 @@ describe("error responses", () => {
   it("returns 400 for invalid selectors", async () => {
     const app = createApp();
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com&item=[&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com&item=[&link=a",
     );
 
     expect(response.status).toBe(400);
@@ -42,7 +42,7 @@ describe("error responses", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a",
     );
 
     expect(response.status).toBe(502);
@@ -63,7 +63,7 @@ describe("error responses", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a",
     );
 
     expect(response.status).toBe(502);
@@ -83,7 +83,7 @@ describe("error responses", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a",
     );
 
     expect(response.status).toBe(502);
@@ -104,7 +104,7 @@ describe("error responses", () => {
 
     const app = createApp({ fetchImpl });
     const response = await app.request(
-      "http://127.0.0.1:3000/rss?url=example.com/blog&item=.post&link=a",
+      "http://127.0.0.1:8677/rss?url=example.com/blog&item=.post&link=a",
     );
 
     expect(response.status).toBe(502);

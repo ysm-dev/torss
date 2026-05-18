@@ -13,7 +13,7 @@ describe("generateRss", () => {
           title: "A < B",
         },
       ],
-      selfUrl: "http://127.0.0.1:3000/rss?url=https://example.com",
+      selfUrl: "http://127.0.0.1:8677/rss?url=https://example.com",
       sourceTitle: 'Fish & "Chips"',
       sourceUrl: "https://example.com",
     });
@@ -22,7 +22,7 @@ describe("generateRss", () => {
     expect(xml).toContain("<title>A &lt; B</title>");
     expect(xml).toContain("<description>Tom &amp; Jerry</description>");
     expect(xml).toContain(
-      '<atom:link href="http://127.0.0.1:3000/rss?url=https://example.com" rel="self" type="application/rss+xml"/>',
+      '<atom:link href="http://127.0.0.1:8677/rss?url=https://example.com" rel="self" type="application/rss+xml"/>',
     );
   });
 });
