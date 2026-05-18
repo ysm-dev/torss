@@ -35,7 +35,7 @@ curl "http://127.0.0.1:8677/rss?url=https://news.ycombinator.com&item=.athing&li
 docker compose up -d --build
 ```
 
-The Compose service binds torss to `127.0.0.1:8677` and uses `restart: unless-stopped`, so it starts again when OrbStack/Docker starts after a computer restart.
+The Compose service binds torss to `0.0.0.0:8677` and uses `restart: unless-stopped`, so it starts again when OrbStack/Docker starts after a computer restart. Other Tailscale nodes can reach it at `http://<tailscale-ip>:8677` when macOS firewall rules allow the connection.
 
 For OrbStack, also enable launch at login:
 
